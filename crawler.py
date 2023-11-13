@@ -3,8 +3,7 @@ from urllib.parse import urljoin, urlparse
 import requests
 import networkx as nx
 import matplotlib.pyplot as plt
-#for timing code, delete later
-import time
+import pickle 
 
 def is_same_domain(url, base_url):
     """
@@ -18,7 +17,7 @@ def is_different_path(url, base_url):
     """
     return urlparse(url).path != urlparse(base_url).path
 
-def crawling(G, url, current_number_of_nodes, max_number_of_nodes, start_time, root_links):
+def crawling(G, url, current_number_of_nodes, max_number_of_nodes, root_links):
     """
     Add nodes and edges to the graph.
     G : Graph
@@ -39,17 +38,9 @@ def crawling(G, url, current_number_of_nodes, max_number_of_nodes, start_time, r
         # Find all anchor tags (links) in the HTML
         links = soup.find_all('a')
 
-        print(len(links))
-        # # TIME 
-        # elapsed_time_section1 = time.time() - start_time
-        # print(f"This {url} section took {elapsed_time_section1} seconds")
-        # # END TIME
-
         # Extract and print the href attribute from links with the same domain
         for j in range(0, len(links)):
             if current_number_of_nodes >= max_number_of_nodes:
-                break
-            if j > 50:
                 break
             link = links[j]
             href = link.get('href')
@@ -65,9 +56,8 @@ def crawling(G, url, current_number_of_nodes, max_number_of_nodes, start_time, r
         
 
 def main():
-    start_time = time.time()
     #max nodes for each root link
-    max_number_of_nodes = 100
+    max_number_of_nodes = 10000
 
     # TODO: Add links from a separate file
     root_links = ['https://dblp.org/', 'https://dblp.org/pid/e/PErdos.html', 'https://dblp.org/pid/s/PaulGSpirakis.html', 'https://dblp.org/pid/89/8192.html']
@@ -78,21 +68,17 @@ def main():
     current_number_of_nodes = 0
     # Initialize the crawling
     for link in root_links:
-        current_number_of_nodes = crawling(G, link, current_number_of_nodes, max_number_of_nodes, start_time, root_links)
-        print(len(root_links))
+        current_number_of_nodes = crawling(G, link, current_number_of_nodes, max_number_of_nodes, root_links)
         if current_number_of_nodes >= max_number_of_nodes:
             break
-    print(current_number_of_nodes)
-
+    
     # Draw the graph
     pos = nx.spring_layout(G) 
-    nx.draw(G, pos)
-    plt.show()
+    # nx.draw(G, pos)
+    # plt.show()
 
-    #TIME
-    elapsed_time_section1 = time.time() - start_time
-    print(f"Draw graph took {elapsed_time_section1} seconds")
-    #END TIME
+    # Save the graph
+    pickle.dump(G, open('graph.pickle', 'wb'))
 
 if __name__ == '__main__':
     main()
