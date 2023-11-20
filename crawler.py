@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 import requests
+import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import pickle 
@@ -17,7 +18,38 @@ def is_different_path(url, base_url):
     """
     return urlparse(url).path != urlparse(base_url).path
 
-def crawling(G, url, current_number_of_nodes, root_links):
+def crawling_back(G, url, root_links):
+    '''
+    Search backward to exist node and create edge if exist path
+    G : Graph
+    url : current url to check
+    root_links : List of existed links
+    '''
+
+    print("Crawling back: ", url)
+    
+    # Send an HTTP request to the URL
+    response = requests.get(url)
+
+    # Check if the request was successful (status code 200)
+    if response.status_code == 200:
+        # Parse the HTML content of the page
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Find all anchor tags (links) in the HTML
+        links = soup.find_all('a')
+
+        # Extract and print the href attribute from links with the same domain
+        for j in range(0, len(links)):
+            link = links[j]
+            href = link.get('href')
+            absolute_url = urljoin(url, href)  # Build absolute URL
+
+            # Check if URL is in the same domain and has a different path
+            if absolute_url in root_links and url != absolute_url: 
+                G.add_edge(url, absolute_url) # Add edge to the graph
+
+def crawling(G, url, current_number_of_nodes, root_links, min_number_of_nodes):
     """
     Add nodes and edges to the graph.
     G : Graph
@@ -43,19 +75,29 @@ def crawling(G, url, current_number_of_nodes, root_links):
             link = links[j]
             href = link.get('href')
             absolute_url = urljoin(url, href)  # Build absolute URL
-            if is_same_domain(absolute_url, url) and is_different_path(absolute_url, url): # Check if URL is in the same domain
-                root_links.append(absolute_url)
-                G.add_node(absolute_url)
+
+            # Check if URL is in the same domain and has a different path
+            if is_same_domain(absolute_url, url) and is_different_path(absolute_url, url): 
+                if absolute_url not in root_links:
+                    root_links.append(absolute_url) # Add link to the list of root links for further crawling
+                G.add_node(absolute_url) # Add node to the graph
                 G.add_edge(url, absolute_url) # Add edge to the graph
+
+                #Check if the new node have a connection to an existence node
+                crawling_back(G, absolute_url, root_links)
+                if current_number_of_nodes >= min_number_of_nodes:
+                    print(current_number_of_nodes)
+                    break
+                print("Number of nodes: ", current_number_of_nodes)
                 current_number_of_nodes += 1
         return current_number_of_nodes
     else:
-        print('Failed to retrieve the webpage. Status code:', response.status_code)
+        print('Cannot retrieve page information. Status code:', response.status_code)
         
 
 def main():
     #max nodes for each root link
-    min_number_of_nodes = 10000
+    min_number_of_nodes = 200
 
     # Add links from a file
     with open('initial_pages.txt', 'r') as f:
@@ -69,15 +111,19 @@ def main():
     current_number_of_nodes = 0
     # Initialize the crawling
     for link in root_links:
-        current_number_of_nodes = crawling(G, link, current_number_of_nodes, root_links)
+        current_number_of_nodes = crawling(G, link, current_number_of_nodes, root_links, min_number_of_nodes)
         if current_number_of_nodes >= min_number_of_nodes:
             print(current_number_of_nodes)
             break
     
-    # Draw the graph
+    # Draw the graph ? Not sure if require
     pos = nx.spring_layout(G) 
-    # nx.draw(G, pos)
-    # plt.show()
+    nx.draw(G, pos)
+    plt.show()
+
+    # Plot the graph into a loglog plot of the in-degree distribution using matplotlib
+    in_degree = G.in_degree()
+
 
     # Save the graph
     pickle.dump(G, open('graph.pickle', 'wb'))
