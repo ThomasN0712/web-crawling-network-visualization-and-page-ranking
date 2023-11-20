@@ -17,12 +17,12 @@ def is_different_path(url, base_url):
     """
     return urlparse(url).path != urlparse(base_url).path
 
-def crawling(G, url, current_number_of_nodes, max_number_of_nodes, root_links):
+def crawling(G, url, current_number_of_nodes, root_links):
     """
     Add nodes and edges to the graph.
     G : Graph
-    url : URL of the website to scrape
-    number_of_nodes : Number of nodes to add to the graph
+    current_number_of_nodes : Current number of nodes in the graph
+    root_links : List of links
     """
     
     print("Crawling: ", url)
@@ -40,8 +40,6 @@ def crawling(G, url, current_number_of_nodes, max_number_of_nodes, root_links):
 
         # Extract and print the href attribute from links with the same domain
         for j in range(0, len(links)):
-            if current_number_of_nodes >= max_number_of_nodes:
-                break
             link = links[j]
             href = link.get('href')
             absolute_url = urljoin(url, href)  # Build absolute URL
@@ -57,10 +55,13 @@ def crawling(G, url, current_number_of_nodes, max_number_of_nodes, root_links):
 
 def main():
     #max nodes for each root link
-    max_number_of_nodes = 10000
+    min_number_of_nodes = 10000
 
-    # TODO: Add links from a separate file
-    root_links = ['https://dblp.org/', 'https://dblp.org/pid/e/PErdos.html', 'https://dblp.org/pid/s/PaulGSpirakis.html', 'https://dblp.org/pid/89/8192.html']
+    # Add links from a file
+    with open('initial_pages.txt', 'r') as f:
+        root_links = f.read().splitlines()
+        root_links.pop(0) 
+        root_links.pop(len(root_links) - 1) 
     
     # Initilize the graph
     G = nx.DiGraph()
@@ -68,8 +69,9 @@ def main():
     current_number_of_nodes = 0
     # Initialize the crawling
     for link in root_links:
-        current_number_of_nodes = crawling(G, link, current_number_of_nodes, max_number_of_nodes, root_links)
-        if current_number_of_nodes >= max_number_of_nodes:
+        current_number_of_nodes = crawling(G, link, current_number_of_nodes, root_links)
+        if current_number_of_nodes >= min_number_of_nodes:
+            print(current_number_of_nodes)
             break
     
     # Draw the graph
