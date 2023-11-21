@@ -108,7 +108,7 @@ def graph_analysis(G):
         
 def main():
     #max nodes for each root link
-    file_name = input("Enter the file name: ")
+    file_name = input("Enter the initial pages file name: ")
     min_number_of_nodes = int(input("Enter the minimum number of nodes: "))
 
     # Add links from a file

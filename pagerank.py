@@ -12,6 +12,8 @@ def main():
     G = nx.read_gml('graph.gml')
     # Rank nodes
     rank = nx.pagerank(G)
+    print("Lowest rank of graph: ", min(rank.values()))
+    print("Highest rank of graph: ", max(rank.values()))
 
     # Ask user for lower and upper bound, global variables are used to be used in filter_node function
     global lower
