@@ -8,6 +8,7 @@ def main():
         else: 
             return False
     
+    # Read graph
     G = nx.read_gml('graph.gml')
     # Rank nodes
     rank = nx.pagerank(G)

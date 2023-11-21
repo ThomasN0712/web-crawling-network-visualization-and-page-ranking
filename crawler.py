@@ -102,16 +102,17 @@ def graph_analysis(G):
     # Plot the degree distribution
     plt.scatter(xlog, ylog)
     plt.title("Degree of graph")
-    plt.xlabel("Number of pages")
-    plt.ylabel("in-degree")
+    plt.ylabel("Number of pages")
+    plt.xlabel("in-degree")
     plt.show()
         
 def main():
     #max nodes for each root link
+    file_name = input("Enter the file name: ")
     min_number_of_nodes = int(input("Enter the minimum number of nodes: "))
 
     # Add links from a file
-    with open('initial_pages.txt', 'r') as f:
+    with open(file_name, 'r') as f:
         root_links = f.read().splitlines()
         root_links.pop(0) 
         root_links.pop(len(root_links) - 1) 
@@ -121,6 +122,7 @@ def main():
 
     # Initilize the node counter
     current_number_of_nodes = 1
+
     # Initialize the crawling
     for link in root_links:
         current_number_of_nodes = crawling(G, link, current_number_of_nodes, root_links, min_number_of_nodes)
