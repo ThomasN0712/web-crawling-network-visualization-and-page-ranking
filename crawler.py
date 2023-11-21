@@ -4,7 +4,6 @@ import requests
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
-import pickle 
 
 def is_same_domain(url, base_url):
     """
@@ -93,11 +92,23 @@ def crawling(G, url, current_number_of_nodes, root_links, min_number_of_nodes):
         return current_number_of_nodes
     else:
         print('Cannot retrieve page information. Status code:', response.status_code)
-        
 
+def graph_analysis(G):
+    # Calculate the degree of each node
+    xlog = list(np.log(x) for x in range(1, len(G.degree()) + 1))
+    ylog = sorted((np.log(d) for n, d in G.degree()), reverse=True)
+    
+    fig = plt.figure("Degree of graph")
+    # Plot the degree distribution
+    plt.scatter(xlog, ylog)
+    plt.title("Degree of graph")
+    plt.xlabel("Number of pages")
+    plt.ylabel("in-degree")
+    plt.show()
+        
 def main():
     #max nodes for each root link
-    min_number_of_nodes = 200
+    min_number_of_nodes = int(input("Enter the minimum number of nodes: "))
 
     # Add links from a file
     with open('initial_pages.txt', 'r') as f:
@@ -108,7 +119,8 @@ def main():
     # Initilize the graph
     G = nx.DiGraph()
 
-    current_number_of_nodes = 0
+    # Initilize the node counter
+    current_number_of_nodes = 1
     # Initialize the crawling
     for link in root_links:
         current_number_of_nodes = crawling(G, link, current_number_of_nodes, root_links, min_number_of_nodes)
@@ -116,17 +128,16 @@ def main():
             print(current_number_of_nodes)
             break
     
-    # Draw the graph ? Not sure if require
-    pos = nx.spring_layout(G) 
-    nx.draw(G, pos)
-    plt.show()
+    # Draw the graph 
+    # pos = nx.spring_layout(G) 
+    # nx.draw(G, pos)
+    # plt.show()
 
     # Plot the graph into a loglog plot of the in-degree distribution using matplotlib
-    in_degree = G.in_degree()
-
+    graph_analysis(G)
 
     # Save the graph
-    pickle.dump(G, open('graph.pickle', 'wb'))
+    nx.write_gml(G, 'graph.gml')
 
 if __name__ == '__main__':
     main()
